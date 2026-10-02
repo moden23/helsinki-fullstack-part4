@@ -7,21 +7,6 @@ const totalLikes = (blogs) => {
   return blogs.length === 0 ? 0 : blogs.reduce(reducer, 0);
 };
 
-const findHighest = (blogs, accumulatorFrequency, returnValues) => {
-  const map = new Map();
-
-  blogs.forEach((blog) => {
-    map.set(blog.author, 0);
-    if (map.has(blog.author)) {
-      map.set(blog.author, map.get(blog.author) + accumulatorFrequency);
-    }
-  });
-
-  let authorWithMostBlogs = {
-    author: "dummyname",
-  };
-};
-
 const favoriteBlog = (blogs) => {
   let mostLikesObject = blogs[0];
   blogs.forEach((blog) => {

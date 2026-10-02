@@ -21,7 +21,5 @@ app.use(middleware.requestLogger);
 app.use("/api/blogs", blogRouter);
 
 app.use(middleware.unknownEndpoint);
-const PORT = 3003;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+
+module.exports = app;
