@@ -32,17 +32,12 @@ blogRouter.delete("/:id", async (request, response) => {
 });
 
 blogRouter.put("/:id", async (request, response) => {
-  const { title, author, url, likes } = request.body;
+  const { likes } = request.body;
   const id = request.params.id;
   const blog = await Blog.findById(id);
 
   if (!blog) return response.status(404).end();
 
-  if (!(url || title)) response.status(400).end();
-
-  blog.title = title;
-  blog.author = author;
-  blog.url = url;
   blog.likes = likes || 0;
 
   const updatedBlog = blog.save();

@@ -4,27 +4,13 @@ const mongoose = require("mongoose");
 const supertest = require("supertest");
 const Blog = require("../model/blog");
 const app = require("../app");
+const helper = require("./test_helper");
 
 const api = supertest(app);
 
-const initialBlogs = [
-  {
-    title: "React patterns",
-    author: "Michael Chan",
-    url: "https://reactpatterns.com/",
-    likes: 7,
-  },
-  {
-    title: "Go To Statement Considered Harmful",
-    author: "Edsger W. Dijkstra",
-    url: "http://www.u.arizona.edu/~rubinson/copyright_violations/Go_To_Considered_Harmful.html",
-    likes: 5,
-  },
-];
-
 beforeEach(async () => {
   await Blog.deleteMany({});
-  await Blog.insertMany(initialBlogs);
+  await Blog.insertMany(helper.initialBlogs);
 });
 
 describe("when there is initially some notes saved", async () => {
@@ -36,14 +22,14 @@ describe("when there is initially some notes saved", async () => {
   });
 
   test("all blogs are returned", async () => {
-    const response = await api.get("/api/blogs");
+    const blogs = await helper.blogsInDb();
 
-    assert.strictEqual(response.body.length, initialBlogs.length);
+    assert.strictEqual(blogs.length, helper.initialBlogs.length);
   });
 
   test("a specific title is on the blogs", async () => {
-    const response = await api.get("/api/blogs");
-    const titles = response.body.map((e) => e.title);
+    const blogs = await helper.blogsInDb();
+    const titles = blogs.map((e) => e.title);
     console.log(titles);
     assert.strictEqual(titles.includes("React patterns"), true);
   });
@@ -62,11 +48,12 @@ describe("addition of a new note", () => {
       .send(newBlog)
       .expect(201)
       .expect("Content-Type", /application\/json/);
-    const response = await api.get("/api/blogs");
-    const blogTitle = response.body.map((blog) => blog.title);
+
+    const blogs = await helper.blogsInDb();
+    const blogTitle = blogs.map((blog) => blog.title);
 
     assert.strictEqual(blogTitle.includes(newBlog.title), true);
-    assert.strictEqual(response.body.length, initialBlogs.length + 1);
+    assert.strictEqual(response.body.length, helper.initialBlogs.length + 1);
   });
 });
 
@@ -82,12 +69,10 @@ describe("viewing a specific note", async () => {
       .send(newBlog)
       .expect(201)
       .expect("Content-Type", /application\/json/);
-    const response = await api.get("/api/blogs");
+    const blogs = await helper.blogsInDb();
 
     //no duplicates
-    const [blogOfInterest] = response.body.filter(
-      (blog) => blog.title === "fullstack",
-    );
+    const [blogOfInterest] = blogs.filter((blog) => blog.title === "fullstack");
     console.log(blogOfInterest);
     assert.strictEqual(blogOfInterest.likes, 0);
   });
@@ -101,9 +86,9 @@ describe("viewing a specific note", async () => {
   });
 
   test("unique identifier property of the blog posts is named id", async () => {
-    const response = await api.get("/api/blogs");
+    const blogs = await helper.blogsInDb();
 
-    const does_idExist = response.body.some((blog) => {
+    const does_idExist = blogs.some((blog) => {
       console.log(Object.keys(blog));
       return Object.keys(blog).includes("_id");
     });
@@ -112,9 +97,8 @@ describe("viewing a specific note", async () => {
   });
 
   test("correctly updating a blog", async () => {
-    const blogs = await api.get("/api/blogs");
-    const blogsStart = blogs.body;
-    const blogToChange = blogsStart[0];
+    const blogs = await helper.blogsInDb();
+    const blogToChange = blogs[0];
 
     await api
       .put(`api/blogs/${blogToChange.id}`)
@@ -122,36 +106,29 @@ describe("viewing a specific note", async () => {
       .expect(204)
       .expect("Content-Type", /application\/json/);
 
-    const response = await api.get("/api/blogs");
-    const updatedBlog = response.body.find(
+    const blogsUpdated = await helper.blogsInDb();
+    const updatedBlog = blogsUpdated.find(
       (blog) => blogToChange.id === blog.id,
     );
 
     assert.strictEqual(blogs.length, response.body.length);
     assert.strictEqual(updatedBlog.id === blogToChange.id, true);
-    assert.strictEqual(
-      updatedBlog.title === blogToChange.title ||
-        updatedBlog.author === blogToChange.author ||
-        updatedBlog.url === blogToChange.url,
-      false,
-    );
+    assert.strictEqual(updatedBlog.likes !== blogToChange.id, true);
   });
 });
 
 describe("deletion of a blog", () => {
   test.only("test for successful deletion", async () => {
-    const response = await api.get("/api/blogs");
-    const blogs = response.body;
+    const blogs = await helper.blogsInDb();
+
     const blogToDelete = blogs[0];
 
     console.log(blogToDelete.id);
     await api.delete(`/api/blogs/${blogToDelete.id}`).expect(204);
 
-    const responseAfterDeletion = await api.get("/api/blogs");
+    const blogsAfterDeletion = await helper.blogsInDb();
 
-    const blogsIdsAfterDeletion = responseAfterDeletion.body.map(
-      (blog) => blog.id,
-    );
+    const blogsIdsAfterDeletion = blogsAfterDeletion.map((blog) => blog.id);
     console.log(blogsIdsAfterDeletion);
     assert.strictEqual(blogs.includes(blogsIdsAfterDeletion), false);
     assert.strictEqual(blogsIdsAfterDeletion.length, blogs.length - 1);
