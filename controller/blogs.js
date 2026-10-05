@@ -2,6 +2,7 @@ const jwt = require("jsonwebtoken");
 const blogRouter = require("express").Router();
 const Blog = require("../model/blog");
 const User = require("../model/user");
+
 console.log("trexei?");
 
 blogRouter.get("/", async (request, response) => {
@@ -9,7 +10,7 @@ blogRouter.get("/", async (request, response) => {
   response.json(blogs);
 });
 
-blogRouter.post("/", async (request, response) => {
+blogRouter.post("/", userExtractor, async (request, response) => {
   const body = request.body;
   const user = request.user;
 
@@ -33,7 +34,7 @@ blogRouter.post("/", async (request, response) => {
   response.status(201).json(blogCreated);
 });
 
-blogRouter.delete("/:id", async (request, response) => {
+blogRouter.delete("/:id", userExtractor, async (request, response) => {
   const user = request.user;
 
   const id = request.params.id;
