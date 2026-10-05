@@ -4,21 +4,13 @@ const Blog = require("../model/blog");
 const User = require("../model/user");
 console.log("trexei?");
 
-const getTokenFrom = (request) => {
-  const authorization = request.get("authorization");
-  if (authorization && authorization.startsWith("Bearer")) {
-    return authorization.replace("Bearer", "");
-  }
-  return null;
-};
-
 blogRouter.get("/", async (request, response) => {
   const blogs = await Blog.find({});
   response.json(blogs);
 });
 
 blogRouter.post("/", async (request, response) => {
-  const decodedToken = jwt.verify(getTokenFrom(request), proccess.env.secret);
+  const decodedToken = jwt.verify(request.token, process.env.SECRET);
   if (!decodedToken.id) {
     return response.status(401).json({ error: "invalid token" });
   }
@@ -47,11 +39,27 @@ blogRouter.post("/", async (request, response) => {
 });
 
 blogRouter.delete("/:id", async (request, response) => {
-  console.log("den trexei to del");
+  const decodedToken = jwt.verify(request.token, process.env.SECRET);
+  if (!decodedToken.id) {
+    return response.status(401).json({ error: "invalid token" });
+  }
+
   const id = request.params.id;
-  console.log("trexei to del", id);
-  await Blog.findByIdAndDelete(id);
-  response.status(204).end();
+
+  const blog = await Blog.findById(id);
+
+  if (!blog) {
+    return response.status(404).json({ error: "blog not found" });
+  }
+
+  if (blog.user.toString() === decodedToken.id.toString()) {
+    await Blog.findByIdAndDelete(id);
+    return response.status(204).end();
+  }
+
+  return response
+    .status(401)
+    .json({ error: "invalid user, user cant delete an id he didnt created" });
 });
 
 blogRouter.put("/:id", async (request, response) => {
