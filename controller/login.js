@@ -5,7 +5,8 @@ const User = require("../model/user");
 
 loginRouter.post("/", async (request, response) => {
   const { username, password } = request.body;
-  const user = await User.findOne({ username });
+
+  const user = await User.findOne({ username }).populate("blogs");
 
   const passwordCorrect =
     user === null ? false : await bcrypt.compare(password, user.passwordHash);
@@ -21,11 +22,15 @@ loginRouter.post("/", async (request, response) => {
     id: user._id,
   };
 
-  const token = jwt.sign(userToken, proccess.env.SECRET);
+  const token = jwt.sign(userToken, process.env.SECRET);
 
-  response
-    .status(200)
-    .send({ token, username: user.username, name: user.name });
+  response.status(200).send({
+    token,
+    id: user._id,
+    username: user.username,
+    name: user.name,
+    blogs: user.blogs,
+  });
 });
 
 module.exports = loginRouter;

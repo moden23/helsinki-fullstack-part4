@@ -6,7 +6,7 @@ const middleware = require("./utils/middleware");
 const blogRouter = require("./controller/blogs");
 const userRouter = require("./controller/users");
 const loginRouter = require("./controller/login");
-
+const cors = require("cors");
 const app = express();
 
 mongoose
@@ -17,8 +17,9 @@ mongoose
   .catch((error) => {
     logger.error("error connection to MongoDB:", error.message);
   });
-
+console.log(middleware.userExtractor);
 app.use(express.json());
+app.use(cors());
 app.use(middleware.requestLogger);
 app.use(middleware.tokenExtractor);
 app.use("/api/blogs", middleware.userExtractor, blogRouter);
