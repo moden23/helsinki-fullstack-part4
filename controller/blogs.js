@@ -1,5 +1,6 @@
 const blogRouter = require("express").Router();
 const Blog = require("../model/blog");
+const { findById } = require("../model/user");
 
 console.log("trexei?");
 
@@ -57,12 +58,13 @@ blogRouter.put("/:id", async (request, response) => {
   const { likes } = request.body;
   const id = request.params.id;
   const blog = await Blog.findById(id);
-
   if (!blog) return response.status(404).end();
 
   blog.likes = likes || 0;
 
-  const updatedBlog = blog.save();
+  const updatedBlog = await blog.save();
+
+  console.log(updatedBlog);
   response.status(201).json(updatedBlog);
 });
 
