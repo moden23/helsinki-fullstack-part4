@@ -27,6 +27,7 @@ app.use("/api/blogs", middleware.userExtractor, blogRouter);
 app.use("/api/users", userRouter);
 app.use("/api/login", loginRouter);
 if (process.env.NODE_ENV === "test") {
+  console.log("de");
   const testingRouter = require("./controller/testing");
   app.use("/api/testing", testingRouter);
 }
