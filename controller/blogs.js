@@ -1,12 +1,28 @@
 const blogRouter = require("express").Router();
 const Blog = require("../model/blog");
-const { findById } = require("../model/user");
+const User = require("../model/user");
 
 console.log("trexei?");
 
 blogRouter.get("/", async (request, response) => {
   const blogs = await Blog.find({});
-  response.json(blogs);
+
+  const blogWithUsernames = await Promise.all(
+    blogs.map(async (blog) => {
+      try {
+        const user = await User.findById(blog.user);
+        const username = user.username;
+        console.log(user);
+        console.log(username);
+        console.log(blog);
+        console.log({ ...blog.toObject(), user: username });
+        return { ...blog.toObject(), user: username };
+      } catch (error) {
+        return { ...blog, user: "unknown user" };
+      }
+    }),
+  );
+  response.json(blogWithUsernames);
 });
 
 blogRouter.post("/", async (request, response) => {
@@ -57,14 +73,15 @@ blogRouter.delete("/:id", async (request, response) => {
 blogRouter.put("/:id", async (request, response) => {
   const { likes } = request.body;
   const id = request.params.id;
+  console.log(id);
   const blog = await Blog.findById(id);
+
   if (!blog) return response.status(404).end();
 
   blog.likes = likes || 0;
 
   const updatedBlog = await blog.save();
 
-  console.log(updatedBlog);
   response.status(201).json(updatedBlog);
 });
 
