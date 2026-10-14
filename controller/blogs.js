@@ -2,8 +2,6 @@ const blogRouter = require("express").Router();
 const Blog = require("../model/blog");
 const User = require("../model/user");
 
-console.log("trexei?");
-
 blogRouter.get("/", async (request, response) => {
   const blogs = await Blog.find({});
 
@@ -12,16 +10,19 @@ blogRouter.get("/", async (request, response) => {
       try {
         const user = await User.findById(blog.user);
         const username = user.username;
-        console.log(user);
-        console.log(username);
-        console.log(blog);
-        console.log({ ...blog.toObject(), user: username });
-        return { ...blog.toObject(), user: username };
+
+        const { _id, ...blogObject } = blog.toObject();
+        return {
+          ...blogObject,
+          id: _id.toString(),
+          user: username,
+        };
       } catch (error) {
         return { ...blog, user: "unknown user" };
       }
     }),
   );
+
   response.json(blogWithUsernames);
 });
 
